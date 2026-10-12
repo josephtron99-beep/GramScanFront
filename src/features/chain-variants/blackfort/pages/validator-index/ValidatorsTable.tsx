@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import React from 'react';
+
+import type {
+  ValidatorBlackfort,
+  ValidatorsBlackfortSortingField,
+  ValidatorsBlackfortSortingValue,
+} from 'src/features/chain-variants/blackfort/types/api';
+
+import { currencyUnits } from 'src/slices/chain/units';
+
+import useLazyRenderedList from 'src/shared/lists/useLazyRenderedList';
+import getNextSortValue from 'src/shared/sort/get-next-sort-value';
+
+import { TableBody, TableColumnHeader, TableColumnHeaderSortable, TableHeaderSticky, TableRoot, TableRow } from 'src/toolkit/chakra/table';
+
+import { VALIDATORS_BLACKFORT_SORT_SEQUENCE } from './utils';
+import ValidatorsTableItem from './ValidatorsTableItem';
+
+interface Props {
+  data: Array<ValidatorBlackfort>;
+  sort: ValidatorsBlackfortSortingValue;
+  setSorting: ({ value }: { value: Array<string> }) => void;
+  isLoading?: boolean;
+  top: number;
+  resetKey?: string;
+}
+
+const ValidatorsTable = ({ data, sort, setSorting, isLoading, top, resetKey }: Props) => {
+  const { cutRef, renderedItemsNum } = useLazyRenderedList({ list: data, isEnabled: !isLoading, resetKey });
+
+  const onSortToggle = React.useCallback((field: ValidatorsBlackfortSortingField) => {
+    const value = getNextSortValue<ValidatorsBlackfortSortingField, ValidatorsBlackfortSortingValue>(VALIDATORS_BLACKFORT_SORT_SEQUENCE, field)(sort);
+    setSorting({ value: [ value ] });
+  }, [ sort, setSorting ]);
+
+  return (
+    <TableRoot minW="1000px">
+      <TableHeaderSticky top={ top }>
+        <TableRow>
+          <TableColumnHeaderSortable
+            sortField="address_hash"
+            sortValue={ sort }
+            onSortToggle={ onSortToggle }
+            indicatorPosition="right"
+          >
+            Validator's address
+          </TableColumnHeaderSortable>
+          <TableColumnHeader>Name</TableColumnHeader>
+          <TableColumnHeader isNumeric>Commission</TableColumnHeader>
+          <TableColumnHeader isNumeric>{ `Self bonded ${ currencyUnits.ether }` }</TableColumnHeader>
+          <TableColumnHeader isNumeric>{ `Delegated amount ${ currencyUnits.ether }` }</TableColumnHeader>
+        </TableRow>
+      </TableHeaderSticky>
+      <TableBody>
+        { data.slice(0, renderedItemsNum).map((item, index) => (
+          <ValidatorsTableItem
+            key={ item.address.hash + (isLoading ? index : '') }
+            data={ item }
+            isLoading={ isLoading }/>
+        )) }
+        <TableRow ref={ cutRef }/>
+      </TableBody>
+    </TableRoot>
+  );
+};
+
+export default React.memo(ValidatorsTable);

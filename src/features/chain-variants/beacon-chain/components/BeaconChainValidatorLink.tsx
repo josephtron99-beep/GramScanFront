@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { Text } from '@chakra-ui/react';
+import React from 'react';
+
+import config from 'src/config';
+import CopyToClipboard from 'src/shared/texts/CopyToClipboard';
+
+import { Link } from 'src/toolkit/chakra/link';
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+import { Truncate } from 'src/toolkit/components/truncation/Truncate';
+
+const feature = config.features.beaconChain;
+
+const BeaconChainValidatorLink = ({ pubkey, isLoading }: { pubkey: string; isLoading?: boolean }) => {
+  if (!feature.isEnabled) {
+    return null;
+  }
+
+  let content;
+
+  if (!feature.validatorUrlTemplate) {
+    content = (
+      <Text
+        display="inline-block"
+        textOverflow="ellipsis"
+        overflow="hidden"
+        whiteSpace="nowrap"
+        maxW="100%"
+      >
+        { pubkey }
+      </Text>
+    );
+  } else {
+    content = (
+      <Link
+        href={ feature.validatorUrlTemplate.replace('{pk}', pubkey) }
+        external
+        loading={ isLoading }
+        overflow="hidden"
+        display="grid"
+        gridTemplateColumns="auto 20px"
+      >
+        <Truncate value={ pubkey } type="end" w="100%"/>
+      </Link>
+    );
+  }
+  return (
+    <Skeleton
+      display="grid"
+      overflow="hidden"
+      gridTemplateColumns="auto 24px"
+      alignItems="center"
+      loading={ isLoading }
+    >
+      { content }
+      <CopyToClipboard
+        text={ pubkey }
+        type="text"
+        isLoading={ isLoading }
+        ml={ 1 }
+      />
+    </Skeleton>
+  );
+};
+
+export default React.memo(BeaconChainValidatorLink);

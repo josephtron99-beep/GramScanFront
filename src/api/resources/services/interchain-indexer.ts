@@ -1,0 +1,115 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import type { ApiResource } from '../types';
+import type * as interchainIndexer from '@blockscout/interchain-indexer-types';
+import type {
+  CrossChainFilters,
+  CrossChainChainsStatsSorting,
+  CrossChainBridgedTokensSorting,
+} from 'src/features/cross-chain-txs/types/api';
+
+export const INTERCHAIN_INDEXER_API_RESOURCES = {
+  chains: {
+    path: '/api/v1/interchain/chains',
+    scopeFilters: [ 'bridge_ids', 'include_unindexed_chains' ],
+  },
+  messages: {
+    path: '/api/v1/interchain/messages',
+    filterFields: [ 'q' as const ],
+    scopeFilters: [ 'home_chain_id', 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  message: {
+    path: '/api/v1/interchain/messages/:id',
+    pathParams: [ 'id' as const ],
+  },
+  tx_messages: {
+    path: '/api/v1/interchain/messages\\:byTx/:hash',
+    pathParams: [ 'hash' as const ],
+    filterFields: [ 'q' as const ],
+    scopeFilters: [ 'home_chain_id', 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  address_messages: {
+    path: '/api/v1/interchain/messages\\:byAddress/:hash',
+    pathParams: [ 'hash' as const ],
+    scopeFilters: [ 'home_chain_id', 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  transfers: {
+    path: '/api/v1/interchain/transfers',
+    filterFields: [ 'q' as const ],
+    scopeFilters: [ 'home_chain_id', 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  tx_transfers: {
+    path: '/api/v1/interchain/transfers\\:byTx/:hash',
+    pathParams: [ 'hash' as const ],
+    filterFields: [ 'q' as const ],
+    scopeFilters: [ 'home_chain_id', 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  address_transfers: {
+    path: '/api/v1/interchain/transfers\\:byAddress/:hash',
+    pathParams: [ 'hash' as const ],
+    scopeFilters: [ 'home_chain_id', 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  stats_chains: {
+    path: '/api/v1/stats/chains',
+    scopeFilters: [ 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+  stats_chain_messages_sent: {
+    path: '/api/v1/stats/chain/:chainId/messages-paths/sent',
+    pathParams: [ 'chainId' as const ],
+    scopeFilters: [ 'bridge_ids', 'include_unindexed_chains' ],
+  },
+  stats_chain_messages_received: {
+    path: '/api/v1/stats/chain/:chainId/messages-paths/received',
+    pathParams: [ 'chainId' as const ],
+    scopeFilters: [ 'bridge_ids', 'include_unindexed_chains' ],
+  },
+  bridged_tokens: {
+    path: '/api/v1/stats/chain/:chainId/bridged-tokens',
+    pathParams: [ 'chainId' as const ],
+    filterFields: [ 'q' as const ],
+    scopeFilters: [ 'bridge_ids', 'include_unindexed_chains' ],
+    paginated: true,
+  },
+} satisfies Record<string, ApiResource>;
+
+export type InterchainIndexerApiResourceName = `interchainIndexer:${ keyof typeof INTERCHAIN_INDEXER_API_RESOURCES }`;
+
+/* eslint-disable @stylistic/indent */
+export type InterchainIndexerApiResourcePayload<R extends InterchainIndexerApiResourceName> =
+R extends 'interchainIndexer:chains' ? interchainIndexer.GetChainsResponse :
+R extends 'interchainIndexer:messages' ? interchainIndexer.GetMessagesResponse :
+R extends 'interchainIndexer:message' ? interchainIndexer.InterchainMessage :
+R extends 'interchainIndexer:tx_messages' ? interchainIndexer.GetMessagesResponse :
+R extends 'interchainIndexer:address_messages' ? interchainIndexer.GetMessagesResponse :
+R extends 'interchainIndexer:transfers' ? interchainIndexer.GetTransfersResponse :
+R extends 'interchainIndexer:tx_transfers' ? interchainIndexer.GetTransfersResponse :
+R extends 'interchainIndexer:address_transfers' ? interchainIndexer.GetTransfersResponse :
+R extends 'interchainIndexer:stats_chains' ? interchainIndexer.GetChainsStatsResponse :
+R extends 'interchainIndexer:bridged_tokens' ? interchainIndexer.GetBridgedTokensResponse :
+R extends 'interchainIndexer:stats_chain_messages_sent' ? interchainIndexer.GetMessagePathsResponse :
+R extends 'interchainIndexer:stats_chain_messages_received' ? interchainIndexer.GetMessagePathsResponse :
+never;
+/* eslint-enable @stylistic/indent */
+
+/* eslint-disable @stylistic/indent */
+export type InterchainIndexerApiPaginationFilters<R extends InterchainIndexerApiResourceName> =
+R extends 'interchainIndexer:messages' ? CrossChainFilters :
+R extends 'interchainIndexer:transfers' ? CrossChainFilters :
+R extends 'interchainIndexer:stats_chains' ? CrossChainFilters :
+R extends 'interchainIndexer:bridged_tokens' ? CrossChainFilters :
+never;
+/* eslint-enable @stylistic/indent */
+
+/* eslint-disable @stylistic/indent */
+export type InterchainIndexerApiPaginationSorting<R extends InterchainIndexerApiResourceName> =
+R extends 'interchainIndexer:stats_chains' ? CrossChainChainsStatsSorting :
+R extends 'interchainIndexer:bridged_tokens' ? CrossChainBridgedTokensSorting :
+never;
+/* eslint-enable @stylistic/indent */

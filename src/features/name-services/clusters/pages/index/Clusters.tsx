@@ -1,0 +1,145 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { Text } from '@chakra-ui/react';
+import { useRouter } from 'next/router';
+import React, { useCallback } from 'react';
+
+import { ACTION_BAR_HEIGHT_DESKTOP } from 'src/shell/page/action-bar/ActionBar';
+
+import { useClusterPagination } from 'src/features/name-services/clusters/hooks/useClusterPagination';
+import { useClustersData } from 'src/features/name-services/clusters/hooks/useClustersData';
+import { useClusterSearch } from 'src/features/name-services/clusters/hooks/useClusterSearch';
+import { detectInputType } from 'src/features/name-services/clusters/utils/detect-input-type';
+import {
+  shouldShowDirectoryView,
+  transformLeaderboardData,
+  transformFullDirectoryData,
+  applyDirectoryPagination,
+  calculateHasNextPage,
+  getCurrentDataLength,
+} from 'src/features/name-services/clusters/utils/page-utils';
+import type { ViewMode } from 'src/features/name-services/clusters/utils/page-utils';
+
+import DataList from 'src/shared/lists/DataList';
+import getQueryParamString from 'src/shared/router/get-query-param-string';
+import { useQueryParams } from 'src/shared/router/useQueryParams';
+
+import { Link } from 'src/toolkit/chakra/link';
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+
+import ClustersActionBar from './ClustersActionBar';
+import ClustersDirectoryTable from './ClustersDirectoryTable';
+import ClustersLeaderboardTable from './ClustersLeaderboardTable';
+
+const Clusters = () => {
+  const router = useRouter();
+  const { updateQuery } = useQueryParams();
+
+  const { searchTerm, debouncedSearchTerm } = useClusterSearch();
+  const viewMode = (getQueryParamString(router.query.view) as ViewMode) || 'directory';
+  const page = parseInt(getQueryParamString(router.query.page) || '1', 10);
+
+  const inputType = React.useMemo(() => {
+    if (!debouncedSearchTerm) return 'cluster_name';
+    return detectInputType(debouncedSearchTerm);
+  }, [ debouncedSearchTerm ]);
+
+  const { data, clusterDetails, isError, isLoading, isClusterDetailsLoading } = useClustersData(debouncedSearchTerm, viewMode, page);
+
+  const showDirectoryView = shouldShowDirectoryView(viewMode, Boolean(debouncedSearchTerm));
+
+  const leaderboardData = transformLeaderboardData(data, showDirectoryView);
+
+  const fullDirectoryData = transformFullDirectoryData(data, clusterDetails, inputType, showDirectoryView);
+
+  const limit = 50;
+
+  const directoryData = applyDirectoryPagination(fullDirectoryData, inputType, page, limit);
+
+  const currentDataLength = getCurrentDataLength(showDirectoryView, directoryData.length, leaderboardData.length);
+
+  const hasNextPage = calculateHasNextPage(
+    data,
+    leaderboardData.length,
+    fullDirectoryData.length,
+    showDirectoryView,
+    inputType,
+    page,
+    Boolean(debouncedSearchTerm),
+    limit,
+  );
+
+  const { pagination } = useClusterPagination(hasNextPage, isLoading);
+
+  const handleViewModeChange = useCallback((newViewMode: ViewMode) => {
+    updateQuery({
+      view: newViewMode === 'directory' ? undefined : newViewMode,
+      page: undefined,
+    });
+  }, [ updateQuery ]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    updateQuery({
+      q: value || undefined,
+      page: undefined,
+    });
+  }, [ updateQuery ]);
+
+  const hasActiveFilters = Boolean(debouncedSearchTerm);
+
+  const resetKey = `${ viewMode }:${ debouncedSearchTerm }:${ page }`;
+
+  const content = (
+    <TableContainerScrollable>
+      { showDirectoryView ? (
+        <ClustersDirectoryTable
+          data={ directoryData }
+          isLoading={ isLoading }
+          isClusterDetailsLoading={ isClusterDetailsLoading && inputType === 'address' }
+          top={ ACTION_BAR_HEIGHT_DESKTOP }
+          resetKey={ resetKey }
+        />
+      ) : (
+        <ClustersLeaderboardTable
+          data={ leaderboardData }
+          isLoading={ isLoading }
+          top={ ACTION_BAR_HEIGHT_DESKTOP }
+          resetKey={ resetKey }
+        />
+      ) }
+    </TableContainerScrollable>
+  );
+
+  const actionBar = (
+    <ClustersActionBar
+      isLoading={ isLoading }
+      searchTerm={ searchTerm }
+      onSearchChange={ handleSearchChange }
+      viewMode={ viewMode }
+      onViewModeChange={ handleViewModeChange }
+      pagination={ pagination }
+    />
+  );
+
+  return (
+    <>
+      <Text mb={ 6 } textStyle={{ base: 'sm', lg: 'md' }}>
+        <Link href="https://clusters.xyz/?utm_source=blockscout" external noIcon>Clusters</Link>{ ' ' }
+        is a cross-chain name service for managing addresses on multiple blockchains using a universal naming directory.
+      </Text>
+      <DataList
+        isError={ isError }
+        itemsNum={ currentDataLength }
+        hasActiveFilters={ hasActiveFilters }
+        emptyStateProps={{
+          term: 'cluster',
+        }}
+        actionBar={ actionBar }
+      >
+        { content }
+      </DataList>
+    </>
+  );
+};
+
+export default Clusters;

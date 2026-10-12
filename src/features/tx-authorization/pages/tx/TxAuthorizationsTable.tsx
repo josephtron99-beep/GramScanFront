@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import React from 'react';
+
+import type { schemas } from '@blockscout/api-types';
+
+import { AddressHighlightProvider } from 'src/slices/address/contexts/address-highlight';
+
+import useLazyRenderedList from 'src/shared/lists/useLazyRenderedList';
+
+import { TableBody, TableColumnHeader, TableHeaderSticky, TableRoot, TableRow } from 'src/toolkit/chakra/table';
+
+import TxAuthorizationsTableItem from './TxAuthorizationsTableItem';
+
+interface Props {
+  data: Array<schemas['SignedAuthorization']>;
+  isLoading?: boolean;
+  resetKey?: string;
+}
+
+const TxAuthorizationsTable = ({ data, isLoading, resetKey }: Props) => {
+  const { cutRef, renderedItemsNum } = useLazyRenderedList({ list: data, isEnabled: !isLoading, resetKey });
+
+  return (
+    <AddressHighlightProvider>
+      <TableRoot minW="900px">
+        <TableHeaderSticky>
+          <TableRow>
+            <TableColumnHeader width="50%">Authority</TableColumnHeader>
+            <TableColumnHeader width="50%">Delegated address</TableColumnHeader>
+            <TableColumnHeader width="120px">Chain</TableColumnHeader>
+            <TableColumnHeader width="120px">Nonce</TableColumnHeader>
+            <TableColumnHeader width="200px">Status</TableColumnHeader>
+          </TableRow>
+        </TableHeaderSticky>
+        <TableBody>
+          { data.slice(0, renderedItemsNum).map((item, index) => (
+            <TxAuthorizationsTableItem
+              key={ item.nonce.toString() + (isLoading ? index : '') }
+              data={ item }
+              isLoading={ isLoading }
+            />
+          )) }
+          <TableRow ref={ cutRef }/>
+        </TableBody>
+      </TableRoot>
+    </AddressHighlightProvider>
+  );
+};
+
+export default TxAuthorizationsTable;

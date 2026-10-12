@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import BigNumber from 'bignumber.js';
+import React from 'react';
+
+import type { schemas } from '@blockscout/api-types';
+import type { ClusterChainConfig } from 'src/features/multichain/types/client';
+import { hasTokenIds, isConfidentialTokenType } from 'src/slices/token/utils/token-types';
+
+import AddressEntityWithTokenFilter from 'src/slices/address/components/entity/AddressEntityWithTokenFilter';
+import TokenMultiplierTag from 'src/slices/token/components/ui-multiplier/TokenMultiplierTag';
+import { getUiMultiplier } from 'src/slices/token/utils/ui-multiplier';
+
+import AssetValue from 'src/shared/values/entity/AssetValue';
+import ConfidentialValue from 'src/shared/values/entity/ConfidentialValue';
+import Utilization from 'src/shared/values/utilization/Utilization';
+
+import { TableCell, TableRow } from 'src/toolkit/chakra/table';
+import { Truncate } from 'src/toolkit/components/truncation/Truncate';
+
+interface Props {
+  holder: schemas['TokenHolderResponse'];
+  token: schemas['Token'];
+  chainData?: ClusterChainConfig;
+  isLoading?: boolean;
+};
+
+const TokenTransferTableItem = ({ holder, token, chainData, isLoading }: Props) => {
+  const multiplier = getUiMultiplier(token, chainData?.app_config);
+
+  return (
+    <TableRow>
+      <TableCell verticalAlign="middle">
+        <AddressEntityWithTokenFilter
+          address={ holder.address }
+          tokenHash={ token.address_hash }
+          tokenSymbol={ token.symbol ?? undefined }
+          isLoading={ isLoading }
+          flexGrow={ 1 }
+          fontWeight="700"
+        />
+      </TableCell>
+      { (hasTokenIds(token.type)) && 'token_id' in holder && holder.token_id !== null && (
+        <TableCell verticalAlign="middle">
+          <Truncate value={ holder.token_id } type="end" loading={ isLoading } w="100%"/>
+        </TableCell>
+      ) }
+      <TableCell verticalAlign="middle" isNumeric>
+        { isConfidentialTokenType(token.type) ? (
+          <ConfidentialValue loading={ isLoading } wordBreak="break-word"/>
+        ) : (
+          <AssetValue
+            amount={ holder.value }
+            decimals={ token.decimals ?? '0' }
+            multiplier={ multiplier }
+            startElement={ multiplier && <TokenMultiplierTag multiplier={ multiplier } loading={ isLoading } mr={ 2 }/> }
+            loading={ isLoading }
+          />
+        ) }
+      </TableCell>
+      { token.total_supply && token.type !== 'ERC-404' && !isConfidentialTokenType(token.type) && (
+        <TableCell verticalAlign="middle" isNumeric>
+          <Utilization
+            value={ BigNumber(holder.value ?? '0').div(BigNumber(token.total_supply)).dp(4).toNumber() }
+            colorScheme="green"
+            display="inline-flex"
+            isLoading={ isLoading }
+          />
+        </TableCell>
+      ) }
+    </TableRow>
+  );
+};
+
+export default React.memo(TokenTransferTableItem);

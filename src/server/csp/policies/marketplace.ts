@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import type CspDev from 'csp-dev';
+
+import essentialDappsChains from 'src/features/marketplace/chains-config/essential-dapps';
+
+import config from 'src/config';
+
+const feature = config.features.marketplace;
+
+export function marketplace(isPrivateMode: boolean): CspDev.DirectiveDescriptor {
+  if (!feature.isEnabled || isPrivateMode) {
+    return {};
+  }
+
+  const chainsConfig = essentialDappsChains();
+  const externalApiEndpoints = chainsConfig?.chains.map((chain) => chain.app_config?.apis?.core?.endpoint).filter(Boolean);
+  const defaultRpcUrls = chainsConfig?.chains.map((chain) => chain.app_config?.chain?.rpcUrls).flat().filter(Boolean);
+
+  const multisenderHost = feature.essentialDapps?.multisend ? '*.multisender.app' : '';
+  const posthogHost = feature.essentialDapps?.multisend?.posthogHost ? '*.posthog.com' : '';
+
+  return {
+    'connect-src': [
+      'api' in feature ? feature.api.endpoint : '',
+      ...(feature.essentialDapps ? [
+        multisenderHost,
+        posthogHost,
+        ...(externalApiEndpoints ?? []),
+        ...(defaultRpcUrls ?? []),
+      ] : []),
+    ],
+
+    'frame-src': [
+      '*',
+    ],
+
+    'script-src': [
+      posthogHost,
+    ],
+  };
+}

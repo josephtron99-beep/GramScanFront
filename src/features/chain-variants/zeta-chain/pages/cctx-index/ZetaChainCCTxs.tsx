@@ -1,0 +1,178 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { useQueryClient } from '@tanstack/react-query';
+import React from 'react';
+
+import { CctxStatusReduced, type CctxListItem, type ListCctxsResponse } from '@blockscout/zetachain-cctx-types';
+import type { SocketMessage } from 'src/api/socket/types';
+import type { ZetaChainCCTXFilterParams } from 'src/features/chain-variants/zeta-chain/types/client';
+import type { PaginationParams } from 'src/shared/pagination/types';
+
+import { getResourceKey } from 'src/api/hooks/useApiQuery';
+import useSocketChannel from 'src/api/socket/useSocketChannel';
+import useSocketMessage from 'src/api/socket/useSocketMessage';
+
+import ActionBar from 'src/shell/page/action-bar/ActionBar';
+
+import useIsMobile from 'src/shared/hooks/useIsMobile';
+import DataList from 'src/shared/lists/DataList';
+import Pagination from 'src/shared/pagination/Pagination';
+
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+
+import ZetaChainCCTxsTable from './ZetaChainCCTxsTable';
+
+const OVERLOAD_COUNT = 75;
+
+type Props = {
+  pagination: PaginationParams;
+  top?: number;
+  items?: Array<CctxListItem>;
+  isInitialLoading: boolean;
+  isTransitioning: boolean;
+  isError: boolean;
+  filters?: ZetaChainCCTXFilterParams;
+  onFilterChange: <T extends keyof ZetaChainCCTXFilterParams>(field: T, val: ZetaChainCCTXFilterParams[T]) => void;
+  showStatusFilter?: boolean;
+  type: 'pending' | 'mined';
+  resetKey?: string;
+};
+
+const ZetaChainCCTxs = ({
+  pagination,
+  top,
+  items,
+  isInitialLoading,
+  isTransitioning,
+  isError,
+  filters = {},
+  onFilterChange,
+  showStatusFilter = true,
+  type,
+  resetKey,
+}: Props) => {
+  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const [ showSocketErrorAlert, setShowSocketErrorAlert ] = React.useState(false);
+  const [ showOverloadNotice, setShowOverloadNotice ] = React.useState(false);
+
+  // Socket handling for new CCTX messages
+  const handleNewCCTXMessage: SocketMessage.NewZetaChainCCTXs['handler'] = React.useCallback((payload) => {
+    const currentQueryKey = getResourceKey('zetachain:transactions', {
+      queryParams: {
+        limit: 50,
+        offset: 0,
+        status_reduced: type === 'pending' ? [ 'Pending' ] : [ 'Success', 'Failed' ],
+        direction: 'DESC',
+      },
+    });
+
+    const filteredPayload = type === 'pending' ?
+      payload.filter(tx => tx.status_reduced === CctxStatusReduced.PENDING) :
+      payload.filter(tx => tx.status_reduced === CctxStatusReduced.SUCCESS || tx.status_reduced === CctxStatusReduced.FAILED);
+
+    queryClient.setQueryData(currentQueryKey, (prevData: ListCctxsResponse | undefined) => {
+      if (!prevData) {
+        return {
+          items: filteredPayload,
+          next_page_params: null,
+        };
+      }
+
+      if (filteredPayload.length === 0) {
+        return prevData; // No relevant transactions to add
+      }
+
+      // Create a map of existing items by index for quick lookup
+      const existingItemsMap = new Map(
+        prevData.items.map((item) => [ item.index, item ]),
+      );
+
+      // Update or add new items from filtered payload
+      filteredPayload.forEach((newItem) => {
+        existingItemsMap.set(newItem.index, newItem);
+      });
+
+      // Convert back to array, sort by last_update_timestamp (newest first)
+      const mergedItems = Array.from(existingItemsMap.values())
+        .sort((a, b) => Number(b.last_update_timestamp) - Number(a.last_update_timestamp));
+
+      // Check if we've reached overload count
+      if (mergedItems.length >= OVERLOAD_COUNT) {
+        setShowOverloadNotice(true);
+        return prevData; // Don't update the list when overloaded
+      }
+
+      return {
+        ...prevData,
+        items: mergedItems,
+      };
+    });
+  }, [ queryClient, type ]);
+
+  const handleSocketClose = React.useCallback(() => {
+    setShowSocketErrorAlert(true);
+  }, []);
+
+  const handleSocketError = React.useCallback(() => {
+    setShowSocketErrorAlert(true);
+  }, []);
+
+  // Socket channel for CCTX updates
+  const hasFilters = Object.values(filters).some(value => value !== undefined && value !== '');
+
+  const channel = useSocketChannel({
+    topic: 'cctxs:new_cctxs',
+    isDisabled: hasFilters, // Disable when filters are applied
+    onSocketClose: handleSocketClose,
+    onSocketError: handleSocketError,
+    socketName: 'zetachain',
+  });
+
+  useSocketMessage({
+    channel,
+    event: 'new_cctxs',
+    handler: handleNewCCTXMessage,
+  });
+
+  const content = (
+    <TableContainerScrollable>
+      <ZetaChainCCTxsTable
+        txs={ items ?? [] }
+        top={ top || 0 }
+        isLoading={ isInitialLoading }
+        filters={ filters }
+        onFilterChange={ onFilterChange }
+        showStatusFilter={ showStatusFilter }
+        showSocketInfo={ pagination.page === 1 && !hasFilters }
+        showSocketErrorAlert={ showSocketErrorAlert }
+        socketInfoNum={ showOverloadNotice ? 1 : 0 }
+        resetKey={ resetKey }
+      />
+    </TableContainerScrollable>
+  );
+
+  const actionBar = (isMobile && pagination.isVisible) ? (
+    <ActionBar mt={ -6 }>
+      <Pagination ml="auto" { ...pagination }/>
+    </ActionBar>
+  ) : null;
+
+  return (
+    <DataList
+      isError={ isError }
+      itemsNum={ items?.length }
+      emptyText="There are no cross chain transactions."
+      hasActiveFilters={ hasFilters }
+      emptyStateProps={{
+        term: 'cross chain transaction',
+      }}
+      actionBar={ actionBar }
+      isTransitioning={ isTransitioning }
+    >
+      { content }
+    </DataList>
+  );
+};
+
+export default ZetaChainCCTxs;

@@ -1,0 +1,153 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useState } from 'react';
+
+import type { WatchlistAddress, WatchlistResponse } from 'src/features/account/types/api';
+
+import { getResourceKey } from 'src/api/hooks/useApiQuery';
+import { resourceKey } from 'src/api/resources';
+
+import ActionBar, { ACTION_BAR_HEIGHT_DESKTOP } from 'src/shell/page/action-bar/ActionBar';
+import PageTitle from 'src/shell/page/title/PageTitle';
+
+import AccountPageDescription from 'src/features/account/components/AccountPageDescription';
+import useProfileQuery from 'src/features/account/hooks/useProfileQuery';
+import useRedirectForInvalidAuthToken from 'src/features/account/hooks/useRedirectForInvalidAuthToken';
+import { WATCH_LIST_ITEM_WITH_TOKEN_INFO } from 'src/features/account/stubs';
+
+import DataList from 'src/shared/lists/DataList';
+import Pagination from 'src/shared/pagination/Pagination';
+import useApiPaginatedQuery from 'src/shared/pagination/useApiPaginatedQuery';
+
+import { Button } from 'src/toolkit/chakra/button';
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+import { useDisclosure } from 'src/toolkit/hooks/useDisclosure';
+
+import AddressModal from './AddressModal/AddressModal';
+import DeleteAddressModal from './DeleteAddressModal';
+import WatchlistEmailAlert from './WatchlistEmailAlert';
+import WatchlistTable from './WatchlistTable/WatchlistTable';
+
+const WatchList: React.FC = () => {
+
+  const { data, isInitialLoading, isTransitioning, isError, pagination } = useApiPaginatedQuery({
+    resourceName: 'core:watchlist',
+    options: {
+      placeholderData: { items: Array(5).fill(WATCH_LIST_ITEM_WITH_TOKEN_INFO), next_page_params: null },
+    },
+  });
+  const queryClient = useQueryClient();
+  const profileQuery = useProfileQuery();
+
+  const addressModalProps = useDisclosure();
+  const deleteModalProps = useDisclosure();
+  useRedirectForInvalidAuthToken();
+
+  const [ addressModalData, setAddressModalData ] = useState<WatchlistAddress>();
+  const [ deleteModalData, setDeleteModalData ] = useState<WatchlistAddress>();
+
+  const hasEmail = Boolean(profileQuery.data?.email);
+
+  const onEditClick = useCallback((data: WatchlistAddress) => {
+    setAddressModalData(data);
+    addressModalProps.onOpen();
+  }, [ addressModalProps ]);
+
+  const onAddressModalOpenChange = useCallback(({ open }: { open: boolean }) => {
+    !open && setAddressModalData(undefined);
+    addressModalProps.onOpenChange({ open });
+  }, [ addressModalProps ]);
+
+  const onAddOrEditSuccess = useCallback(async() => {
+    await queryClient.refetchQueries({ queryKey: [ resourceKey('core:watchlist') ] });
+    setAddressModalData(undefined);
+    addressModalProps.onClose();
+  }, [ addressModalProps, queryClient ]);
+
+  const onDeleteClick = useCallback((data: WatchlistAddress) => {
+    setDeleteModalData(data);
+    deleteModalProps.onOpen();
+  }, [ deleteModalProps ]);
+
+  const onDeleteModalOpenChange = useCallback(({ open }: { open: boolean }) => {
+    !open && setDeleteModalData(undefined);
+    deleteModalProps.onOpenChange({ open });
+  }, [ deleteModalProps ]);
+
+  const onDeleteSuccess = useCallback(async() => {
+    queryClient.setQueryData(getResourceKey('core:watchlist'), (prevData: WatchlistResponse | undefined) => {
+      const newItems = prevData?.items.filter((item: WatchlistAddress) => item.id !== deleteModalData?.id);
+      return { ...prevData, items: newItems };
+    },
+    );
+  }, [ deleteModalData?.id, queryClient ]);
+
+  const content = (() => {
+    const actionBar = pagination.isVisible ? (
+      <ActionBar mt={ -6 }>
+        <Pagination ml="auto" { ...pagination }/>
+      </ActionBar>
+    ) : null;
+
+    return (
+      <>
+        { !hasEmail && <WatchlistEmailAlert/> }
+        <AccountPageDescription>
+          An email notification can be sent to you when an address on your watch list sends or receives any transactions.
+        </AccountPageDescription>
+        <DataList
+          isError={ isError }
+          itemsNum={ data?.items.length }
+          emptyText=""
+          actionBar={ actionBar }
+          isTransitioning={ isTransitioning }
+        >
+          <TableContainerScrollable>
+            <WatchlistTable
+              data={ data?.items }
+              isLoading={ isInitialLoading }
+              onDeleteClick={ onDeleteClick }
+              onEditClick={ onEditClick }
+              top={ pagination.isVisible ? ACTION_BAR_HEIGHT_DESKTOP : 0 }
+              hasEmail={ hasEmail }
+            />
+          </TableContainerScrollable>
+        </DataList>
+        <Skeleton mt={ 8 } loading={ isInitialLoading } display="inline-block">
+          <Button
+            onClick={ addressModalProps.onOpen }
+          >
+            Add address
+          </Button>
+        </Skeleton>
+        <AddressModal
+          { ...addressModalProps }
+          onOpenChange={ onAddressModalOpenChange }
+          onSuccess={ onAddOrEditSuccess }
+          data={ addressModalData }
+          isAdd={ !addressModalData }
+          hasEmail={ hasEmail }
+        />
+        { deleteModalData && (
+          <DeleteAddressModal
+            { ...deleteModalProps }
+            onOpenChange={ onDeleteModalOpenChange }
+            onSuccess={ onDeleteSuccess }
+            data={ deleteModalData }
+          />
+        ) }
+      </>
+    );
+  })();
+
+  return (
+    <>
+      <PageTitle title="Watch list"/>
+      { content }
+    </>
+  );
+};
+
+export default WatchList;

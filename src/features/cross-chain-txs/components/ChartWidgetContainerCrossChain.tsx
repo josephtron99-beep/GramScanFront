@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { chakra } from '@chakra-ui/react';
+import { route } from 'nextjs-routes';
+import React from 'react';
+
+import type { Props as ChartWidgetContainerProps } from 'src/features/chain-stats/components/ChartWidgetContainer';
+import { getChartUrl } from 'src/features/chain-stats/utils/chart';
+import { useMultichainContext } from 'src/features/multichain/context';
+
+import { SankeyChartWidget } from 'src/toolkit/components/charts/sankey/SankeyChartWidget';
+
+import useCrossChainChartQuery from '../hooks/useCrossChainChartQuery';
+import type { CrossChainTxsChartId } from '../utils/chain-stats';
+
+interface Props extends Omit<ChartWidgetContainerProps, 'id'> {
+  id: CrossChainTxsChartId;
+}
+
+const ChartWidgetContainerCrossChain = ({ id, interval, isLoading, onLoadingError, className, href, title, description }: Props) => {
+
+  const chainData = useMultichainContext()?.chain;
+  const query = useCrossChainChartQuery({ id, interval, enabled: !isLoading, chainData });
+
+  React.useEffect(() => {
+    if (query.isError) {
+      onLoadingError();
+    }
+  }, [ query.isError, onLoadingError ]);
+
+  return (
+    <SankeyChartWidget
+      data={ query.data?.data }
+      title={ title }
+      description={ description }
+      isLoading={ query.isPlaceholderData }
+      isError={ query.isError }
+      href={ href ? route(href) : undefined }
+      chartUrl={ getChartUrl(href) }
+      containerProps={{ minH: '230px', className }}
+      noEmptyStateIcon
+    />
+  );
+};
+
+export default React.memo(chakra(ChartWidgetContainerCrossChain));

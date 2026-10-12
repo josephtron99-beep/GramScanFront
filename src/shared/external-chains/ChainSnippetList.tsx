@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import type { StackProps } from '@chakra-ui/react';
+import { HStack } from '@chakra-ui/react';
+import React from 'react';
+
+import type { ExternalChain } from 'src/shared/external-chains/types';
+
+import CopyToClipboard from 'src/shared/texts/CopyToClipboard';
+
+import { Link } from 'src/toolkit/chakra/link';
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+import { Truncate } from 'src/toolkit/components/truncation/Truncate';
+
+import ChainIcon from './ChainIcon';
+
+interface Props extends StackProps {
+  data: ExternalChain;
+  isLoading?: boolean;
+}
+
+const ChainSnippetList = ({ data, isLoading, ...rest }: Props) => {
+  return (
+    <HStack gap={ 3 } justifyContent="flex-start" { ...rest }>
+      <HStack maxW={{ base: '70%', lg: '100%' }}>
+        <ChainIcon data={ data } isLoading={ isLoading }/>
+        { data.explorer_url ? (
+          <Link
+            href={ data?.explorer_url }
+            fontWeight={ 700 }
+            external
+            loading={ isLoading }
+            maxW="calc(100% - 28px)"
+          >
+            <Truncate value={ data?.name ?? 'Unknown chain' } type="end" loading={ isLoading }/>
+          </Link>
+        ) : (
+          <Skeleton loading={ isLoading } fontWeight={ 700 } maxW="calc(100% - 28px)"><span>{ data?.name ?? 'Unknown chain' }</span></Skeleton>
+        ) }
+      </HStack>
+      <HStack gap={ 0 } flexShrink={ 0 }>
+        <Skeleton loading={ isLoading } color="text.secondary" fontWeight={ 500 }><span>{ data.id }</span></Skeleton>
+        <CopyToClipboard text={ data.id } isLoading={ isLoading }/>
+      </HStack>
+    </HStack>
+  );
+};
+
+export default React.memo(ChainSnippetList);

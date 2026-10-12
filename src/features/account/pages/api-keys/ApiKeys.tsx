@@ -1,0 +1,151 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { Text } from '@chakra-ui/react';
+import React, { useCallback, useState } from 'react';
+
+import type { ApiKey } from 'src/features/account/types/api';
+
+import useApiQuery from 'src/api/hooks/useApiQuery';
+
+import PageTitle from 'src/shell/page/title/PageTitle';
+
+import AccountPageDescription from 'src/features/account/components/AccountPageDescription';
+import useRedirectForInvalidAuthToken from 'src/features/account/hooks/useRedirectForInvalidAuthToken';
+import { API_KEY } from 'src/features/account/stubs';
+
+import config from 'src/config';
+import ApiFetchAlert from 'src/shared/alerts/ApiFetchAlert';
+
+import { Alert } from 'src/toolkit/chakra/alert';
+import { BoxHtml } from 'src/toolkit/chakra/box';
+import { Button } from 'src/toolkit/chakra/button';
+import { Link } from 'src/toolkit/chakra/link';
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+import { useDisclosure } from 'src/toolkit/hooks/useDisclosure';
+import { space } from 'src/toolkit/utils/htmlEntities';
+
+import ApiKeyModal from './ApiKeyModal/ApiKeyModal';
+import ApiKeyTable from './ApiKeyTable/ApiKeyTable';
+import DeleteApiKeyModal from './DeleteApiKeyModal';
+
+const DATA_LIMIT = 3;
+
+const feature = config.features.account;
+
+const ApiKeysPage: React.FC = () => {
+  const apiKeyModalProps = useDisclosure();
+  const deleteModalProps = useDisclosure();
+  useRedirectForInvalidAuthToken();
+
+  const [ apiKeyModalData, setApiKeyModalData ] = useState<ApiKey>();
+  const [ deleteModalData, setDeleteModalData ] = useState<ApiKey>();
+
+  const { data, isPlaceholderData, isError } = useApiQuery('core:api_keys', {
+    queryOptions: {
+      placeholderData: Array(3).fill(API_KEY),
+    },
+  });
+
+  const onEditClick = useCallback((data: ApiKey) => {
+    setApiKeyModalData(data);
+    apiKeyModalProps.onOpen();
+  }, [ apiKeyModalProps ]);
+
+  const onApiKeyModalOpenChange = useCallback(({ open }: { open: boolean }) => {
+    !open && setApiKeyModalData(undefined);
+    apiKeyModalProps.onOpenChange({ open });
+  }, [ apiKeyModalProps ]);
+
+  const onDeleteClick = useCallback((data: ApiKey) => {
+    setDeleteModalData(data);
+    deleteModalProps.onOpen();
+  }, [ deleteModalProps ]);
+
+  const onDeleteModalOpenChange = useCallback(({ open }: { open: boolean }) => {
+    !open && setDeleteModalData(undefined);
+    deleteModalProps.onOpenChange({ open });
+  }, [ deleteModalProps ]);
+
+  const description = config.chain.isProApiSupported ? (
+    <AccountPageDescription>
+      Blockscout APIs require a key. Create a <Link href="https://dev.blockscout.com" external noIcon>
+        free PRO API key</Link> to access all multichain endpoints.
+    </AccountPageDescription>
+  ) : (
+    <AccountPageDescription>
+      Create API keys to use for your RPC and EthRPC API requests. For more information, see { space }
+      <Link href="https://docs.blockscout.com/using-blockscout/my-account/api-keys#api-keys" external noIcon>"How to use a Blockscout API key"</Link>.
+    </AccountPageDescription>
+  );
+
+  const content = (() => {
+    if (isError) {
+      return <ApiFetchAlert/>;
+    }
+
+    const list = (
+      <TableContainerScrollable>
+        <ApiKeyTable
+          data={ data }
+          isLoading={ isPlaceholderData }
+          onDeleteClick={ onDeleteClick }
+          onEditClick={ onEditClick }
+          limit={ DATA_LIMIT }
+        />
+      </TableContainerScrollable>
+    );
+
+    const canAdd = !isPlaceholderData ? (data?.length || 0) < DATA_LIMIT : true;
+
+    const alert = feature.isEnabled && feature.apiKeys.alertMessage ? (
+      <Alert status="warning" mb={ 6 }>
+        <BoxHtml html={ feature.apiKeys.alertMessage }/>
+      </Alert>
+    ) : null;
+
+    const button = !config.chain.isProApiSupported ? (
+      <Button
+        onClick={ apiKeyModalProps.onOpen }
+        disabled={ !canAdd }
+      >
+        Add API key
+      </Button>
+    ) : null;
+
+    return (
+      <>
+        { description }
+        { alert }
+        { Boolean(data?.length) && list }
+        <Skeleton
+          marginTop={ 8 }
+          flexDir={{ base: 'column', lg: 'row' }}
+          alignItems={{ base: 'start', lg: 'center' }}
+          loading={ isPlaceholderData }
+          display="inline-flex"
+          columnGap={ 5 }
+          rowGap={ 5 }
+        >
+          { button }
+          { !canAdd && (
+            <Text fontSize="sm" color="text.secondary">
+              { `You have added the maximum number of API keys (${ DATA_LIMIT }). Contact us to request additional keys.` }
+            </Text>
+          ) }
+        </Skeleton>
+        <ApiKeyModal open={ apiKeyModalProps.open } onOpenChange={ onApiKeyModalOpenChange } data={ apiKeyModalData }/>
+        { deleteModalData && <DeleteApiKeyModal open={ deleteModalProps.open } onOpenChange={ onDeleteModalOpenChange } data={ deleteModalData }/> }
+      </>
+    );
+  })();
+
+  return (
+    <>
+      <PageTitle title="API keys"/>
+      { content }
+    </>
+  );
+};
+
+export default ApiKeysPage;

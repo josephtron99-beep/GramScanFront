@@ -1,0 +1,172 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
+import React from 'react';
+
+import type { operations } from '@blockscout/api-types';
+import type { SocketMessage } from 'src/api/socket/types';
+
+import { getResourceKey } from 'src/api/hooks/useApiQuery';
+import * as SocketNewItemsNotice from 'src/api/socket/SocketNewItemsNotice';
+import useSocketChannel from 'src/api/socket/useSocketChannel';
+import useSocketMessage from 'src/api/socket/useSocketMessage';
+
+import ActionBar, { ACTION_BAR_HEIGHT_DESKTOP } from 'src/shell/page/action-bar/ActionBar';
+
+import { BLOCK_ITEM } from 'src/slices/block/stubs/list';
+import { currencyUnits } from 'src/slices/chain/units';
+
+import config from 'src/config';
+import TimeFormatToggle from 'src/shared/date-and-time/TimeFormatToggle';
+import useIsMounted from 'src/shared/hooks/useIsMounted';
+import DataList from 'src/shared/lists/DataList';
+import useLazyRenderedList from 'src/shared/lists/useLazyRenderedList';
+import Pagination from 'src/shared/pagination/Pagination';
+import useApiPaginatedQuery from 'src/shared/pagination/useApiPaginatedQuery';
+import { generateListStub } from 'src/shared/pagination/utils';
+
+import { TableBody, TableColumnHeader, TableContainerScrollable, TableHeaderSticky, TableRoot, TableRow } from 'src/toolkit/chakra/table';
+
+import AddressBlocksValidatedTableItem from './AddressBlocksValidatedTableItem';
+
+const OVERLOAD_COUNT = 75;
+
+interface Props {
+  shouldRender?: boolean;
+  isQueryEnabled?: boolean;
+}
+
+const AddressBlocksValidated = ({ shouldRender = true, isQueryEnabled = true }: Props) => {
+  const [ showSocketAlert, setShowSocketAlert ] = React.useState(false);
+  const [ newItemsCount, setNewItemsCount ] = React.useState(0);
+
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const isMounted = useIsMounted();
+
+  const addressHash = String(router.query.hash);
+  const query = useApiPaginatedQuery({
+    resourceName: 'core:address_blocks_validated',
+    pathParams: { hash: addressHash },
+    options: {
+      enabled: isQueryEnabled,
+      placeholderData: generateListStub<'core:address_blocks_validated'>(
+        BLOCK_ITEM,
+        50,
+        {
+          next_page_params: {
+            block_number: 9060562,
+            items_count: 50,
+          },
+        },
+      ),
+    },
+  });
+
+  const handleSocketError = React.useCallback(() => {
+    setShowSocketAlert(true);
+  }, []);
+
+  const handleNewSocketMessage: SocketMessage.NewBlock['handler'] = React.useCallback((payload) => {
+    setShowSocketAlert(false);
+
+    queryClient.setQueryData(
+      getResourceKey('core:address_blocks_validated', { pathParams: { hash: addressHash } }),
+      (prevData:
+        operations['AddressController.blocks_validated']['json'] | undefined) => {
+        if (!prevData) {
+          return;
+        }
+
+        if (prevData.items.length >= OVERLOAD_COUNT) {
+          setNewItemsCount(prev => prev + 1);
+          return prevData;
+        }
+
+        return {
+          ...prevData,
+          items: [ payload.block, ...prevData.items ],
+        };
+      });
+  }, [ addressHash, queryClient ]);
+
+  const channel = useSocketChannel({
+    topic: `blocks:${ addressHash.toLowerCase() }`,
+    onSocketClose: handleSocketError,
+    onSocketError: handleSocketError,
+    isDisabled: !addressHash || query.isInitialLoading || query.pagination.page !== 1,
+  });
+  useSocketMessage({
+    channel,
+    event: 'new_block',
+    handler: handleNewSocketMessage,
+  });
+
+  const { cutRef, renderedItemsNum } = useLazyRenderedList({
+    list: query.data?.items,
+    isEnabled: !query.isInitialLoading,
+    resetKey: query.queryHash,
+  });
+
+  if (!isMounted || !shouldRender) {
+    return null;
+  }
+
+  const content = query.data?.items ? (
+    <TableContainerScrollable>
+      <TableRoot tableLayout="auto" minW="900px">
+        <TableHeaderSticky top={ query.pagination.isVisible ? ACTION_BAR_HEIGHT_DESKTOP : 0 }>
+          <TableRow>
+            <TableColumnHeader>Block</TableColumnHeader>
+            <TableColumnHeader>
+              Timestamp
+              <TimeFormatToggle/>
+            </TableColumnHeader>
+            <TableColumnHeader>Txn</TableColumnHeader>
+            <TableColumnHeader>Gas used</TableColumnHeader>
+            { !config.slices.block.hiddenFields?.total_reward && !config.features.rollup.isEnabled &&
+                <TableColumnHeader isNumeric>Reward { currencyUnits.ether }</TableColumnHeader> }
+          </TableRow>
+        </TableHeaderSticky>
+        <TableBody>
+          <SocketNewItemsNotice.Desktop
+            num={ newItemsCount }
+            showErrorAlert={ showSocketAlert }
+            type="block"
+            isLoading={ query.isInitialLoading }
+          />
+          { query.data.items.slice(0, renderedItemsNum).map((item, index) => (
+            <AddressBlocksValidatedTableItem
+              key={ item.height + (query.isInitialLoading ? String(index) : '') }
+              data={ item }
+              page={ query.pagination.page }
+              isLoading={ query.isInitialLoading }
+            />
+          )) }
+        </TableBody>
+      </TableRoot>
+      <div ref={ cutRef }/>
+    </TableContainerScrollable>
+  ) : null;
+
+  const actionBar = query.pagination.isVisible ? (
+    <ActionBar mt={ -6 }>
+      <Pagination ml="auto" { ...query.pagination }/>
+    </ActionBar>
+  ) : null;
+
+  return (
+    <DataList
+      isError={ query.isError }
+      itemsNum={ query.data?.items.length }
+      emptyText="There are no validated blocks for this address."
+      actionBar={ actionBar }
+      isTransitioning={ query.isTransitioning }
+    >
+      { content }
+    </DataList>
+  );
+};
+
+export default React.memo(AddressBlocksValidated);

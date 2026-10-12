@@ -1,0 +1,49 @@
+import { Flex } from '@chakra-ui/react';
+import React from 'react';
+import { numberToHex } from 'viem';
+
+import { apps as appsMock } from 'src/features/marketplace/mocks/dapps';
+
+import config from 'src/config';
+
+import type { TestFnArgs } from 'playwright/lib';
+import { test, expect, devices } from 'playwright/lib';
+
+import MarketplaceApp from './MarketplaceApp';
+
+const embeddedApp = { ...appsMock[0], external: false };
+
+const hooksConfig = {
+  router: {
+    query: { id: embeddedApp.id },
+    isReady: true,
+  },
+};
+
+const testFn = async({ render, mockAssetResponse, mockEnvs, mockRpcResponse, mockApiResponse }: TestFnArgs) => {
+  await mockEnvs([
+    [ 'NEXT_PUBLIC_MARKETPLACE_ENABLED', 'true' ],
+  ]);
+  await mockApiResponse('admin:marketplace_dapp', embeddedApp, { pathParams: { instanceId: config.apis.admin?.instanceId, dappId: embeddedApp.id } });
+  await mockAssetResponse(embeddedApp.url, './src/features/marketplace/mocks/dapps.html');
+  await mockRpcResponse([ {
+    Method: 'eth_chainId',
+    ReturnType: numberToHex(Number(config.chain.id)),
+  } ]);
+
+  const component = await render(
+    <Flex flexDirection="column" mx={{ base: 4, lg: 6 }} h="100vh">
+      <MarketplaceApp/>
+    </Flex>,
+    { hooksConfig },
+  );
+
+  await expect(component).toHaveScreenshot();
+};
+
+test('base view', testFn);
+
+test.describe('mobile', () => {
+  test.use({ viewport: devices['iPhone 13 Pro'].viewport });
+  test('base view', testFn);
+});

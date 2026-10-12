@@ -1,0 +1,117 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import React, { useCallback, useState } from 'react';
+
+import type { TransactionTag } from 'src/features/account/types/api';
+
+import ActionBar, { ACTION_BAR_HEIGHT_DESKTOP } from 'src/shell/page/action-bar/ActionBar';
+
+import AccountPageDescription from 'src/features/account/components/AccountPageDescription';
+import { PRIVATE_TAG_TX } from 'src/features/account/stubs';
+
+import DataList from 'src/shared/lists/DataList';
+import Pagination from 'src/shared/pagination/Pagination';
+import useApiPaginatedQuery from 'src/shared/pagination/useApiPaginatedQuery';
+
+import { Button } from 'src/toolkit/chakra/button';
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+import { useDisclosure } from 'src/toolkit/hooks/useDisclosure';
+
+import DeletePrivateTagModal from './DeletePrivateTagModal';
+import TransactionModal from './TransactionModal/TransactionModal';
+import TransactionTagTable from './TransactionTagTable/TransactionTagTable';
+
+const PrivateTransactionTags = () => {
+  const { data: transactionTagsData, isInitialLoading, isTransitioning, isError, pagination } = useApiPaginatedQuery({
+    resourceName: 'core:private_tags_tx',
+    options: {
+      refetchOnMount: false,
+      placeholderData: { items: Array(3).fill(PRIVATE_TAG_TX), next_page_params: null },
+    },
+  });
+
+  const transactionModalProps = useDisclosure();
+  const deleteModalProps = useDisclosure();
+
+  const [ transactionModalData, setTransactionModalData ] = useState<TransactionTag>();
+  const [ deleteModalData, setDeleteModalData ] = useState<TransactionTag>();
+
+  const onEditClick = useCallback((data: TransactionTag) => {
+    setTransactionModalData(data);
+    transactionModalProps.onOpen();
+  }, [ transactionModalProps ]);
+
+  const onAddressModalOpenChange = useCallback(({ open }: { open: boolean }) => {
+    !open && setTransactionModalData(undefined);
+    transactionModalProps.onOpenChange({ open });
+  }, [ transactionModalProps ]);
+
+  const onDeleteClick = useCallback((data: TransactionTag) => {
+    setDeleteModalData(data);
+    deleteModalProps.onOpen();
+  }, [ deleteModalProps ]);
+
+  const onDeleteModalOpenChange = useCallback(({ open }: { open: boolean }) => {
+    !open && setDeleteModalData(undefined);
+    deleteModalProps.onOpenChange({ open });
+  }, [ deleteModalProps ]);
+
+  const description = (
+    <AccountPageDescription>
+      Use private transaction tags to label any transactions of interest.
+      Private tags are saved in your account and are only visible when you are logged in.
+    </AccountPageDescription>
+  );
+
+  const actionBar = pagination.isVisible ? (
+    <ActionBar mt={ -6 }>
+      <Pagination ml="auto" { ...pagination }/>
+    </ActionBar>
+  ) : null;
+
+  return (
+    <>
+      { description }
+      <DataList
+        isError={ isError }
+        itemsNum={ transactionTagsData?.items.length }
+        emptyText=""
+        actionBar={ actionBar }
+        isTransitioning={ isTransitioning }
+      >
+        <TableContainerScrollable>
+          <TransactionTagTable
+            data={ transactionTagsData?.items }
+            isLoading={ isInitialLoading }
+            onDeleteClick={ onDeleteClick }
+            onEditClick={ onEditClick }
+            top={ pagination.isVisible ? ACTION_BAR_HEIGHT_DESKTOP : 0 }
+          />
+        </TableContainerScrollable>
+      </DataList>
+      <Skeleton mt={ 8 } loading={ isInitialLoading } display="inline-block">
+        <Button
+          onClick={ transactionModalProps.onOpen }
+        >
+          Add transaction tag
+        </Button>
+      </Skeleton>
+      <TransactionModal
+        { ...transactionModalProps }
+        onOpenChange={ onAddressModalOpenChange }
+        data={ transactionModalData }
+      />
+      { deleteModalData && (
+        <DeletePrivateTagModal
+          { ...deleteModalProps }
+          onOpenChange={ onDeleteModalOpenChange }
+          data={ deleteModalData }
+          type="transaction"
+        />
+      ) }
+    </>
+  );
+};
+
+export default PrivateTransactionTags;

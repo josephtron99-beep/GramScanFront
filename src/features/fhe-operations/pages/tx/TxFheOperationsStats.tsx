@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import React from 'react';
+
+import StatsContainer from 'src/shared/stats/StatsContainer';
+import StatsWidget from 'src/shared/stats/StatsWidget';
+
+interface Props {
+  totalHcu: number;
+  maxDepthHcu: number;
+  operationCount: number;
+  isLoading?: boolean;
+}
+
+const TxFHEOperationsStats = ({ totalHcu, maxDepthHcu, operationCount, isLoading }: Props) => {
+  return (
+    <StatsContainer mb={ 6 }>
+      <StatsWidget
+        label="Total HCU"
+        hint="Sum of all Homomorphic Computation Units consumed by FHE operations in this transaction"
+        value={ (totalHcu || 0).toLocaleString() }
+        isLoading={ isLoading }
+      />
+      <StatsWidget
+        label="Max Depth HCU"
+        hint="Maximum HCU consumed at any single depth level in the FHE operation tree"
+        value={ (maxDepthHcu || 0).toLocaleString() }
+        isLoading={ isLoading }
+      />
+      <StatsWidget
+        label="Operations"
+        hint="Total number of FHE operations executed in this transaction"
+        value={ operationCount.toLocaleString() }
+        isLoading={ isLoading }
+      />
+    </StatsContainer>
+  );
+};
+
+export default React.memo(TxFHEOperationsStats);

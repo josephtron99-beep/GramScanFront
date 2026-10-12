@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import React from 'react';
+
+import useApiQuery from 'src/api/hooks/useApiQuery';
+
+import { ACTION_BAR_HEIGHT_DESKTOP } from 'src/shell/page/action-bar/ActionBar';
+import PageTitle from 'src/shell/page/title/PageTitle';
+
+import { layerLabels } from 'src/features/rollup/common/utils/layer';
+import { SCROLL_L2_MESSAGE_ITEM } from 'src/features/rollup/scroll/stubs';
+
+import DataList from 'src/shared/lists/DataList';
+import StickyPaginationWithText from 'src/shared/pagination/StickyPaginationWithText';
+import useApiPaginatedQuery from 'src/shared/pagination/useApiPaginatedQuery';
+import { generateListStub } from 'src/shared/pagination/utils';
+
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+import { rightLineArrow, nbsp } from 'src/toolkit/utils/htmlEntities';
+
+import ScrollL2DepositsTable from './ScrollL2DepositsTable';
+
+const ScrollL2Deposits = () => {
+  const { data, isError, isInitialLoading, isTransitioning, pagination, queryHash } = useApiPaginatedQuery({
+    resourceName: 'core:scroll_l2_deposits',
+    options: {
+      placeholderData: generateListStub<'core:scroll_l2_deposits'>(
+        SCROLL_L2_MESSAGE_ITEM,
+        50,
+        { next_page_params: { items_count: 50, id: 1 } },
+      ),
+    },
+  });
+
+  const countersQuery = useApiQuery('core:scroll_l2_deposits_count', {
+    queryOptions: {
+      placeholderData: 1927029,
+    },
+  });
+
+  const content = data?.items ? (
+    <TableContainerScrollable>
+      <ScrollL2DepositsTable
+        items={ data.items }
+        top={ pagination.isVisible ? ACTION_BAR_HEIGHT_DESKTOP : 0 }
+        isLoading={ isInitialLoading }
+        resetKey={ queryHash }
+      />
+    </TableContainerScrollable>
+  ) : null;
+
+  const text = (() => {
+    if (countersQuery.isError) {
+      return null;
+    }
+
+    return (
+      <Skeleton
+        loading={ countersQuery.isPlaceholderData }
+        display="inline-block"
+      >
+        A total of { countersQuery.data?.toLocaleString() } deposits found
+      </Skeleton>
+    );
+  })();
+
+  const actionBar = <StickyPaginationWithText text={ text } pagination={ pagination }/>;
+
+  return (
+    <>
+      <PageTitle title={ `Deposits (${ layerLabels.parent }${ nbsp }${ rightLineArrow }${ nbsp }${ layerLabels.current })` } withTextAd/>
+      <DataList
+        isError={ isError }
+        itemsNum={ data?.items?.length }
+        emptyText="There are no deposits."
+        actionBar={ actionBar }
+        isTransitioning={ isTransitioning }
+      >
+        { content }
+      </DataList>
+    </>
+  );
+};
+
+export default ScrollL2Deposits;

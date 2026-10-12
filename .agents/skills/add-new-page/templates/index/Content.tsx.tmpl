@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import React from 'react';
+
+import __PageName__Table from 'src/__area__/__featureName__/pages/index/__PageName__Table';
+
+import DataList from 'src/shared/lists/DataList';
+
+import { TableContainerScrollable } from 'src/toolkit/chakra/table';
+
+const __PageName__Content = () => {
+  // TODO (api-data): wire up data (useApiPaginatedQuery) — see wiring.md in the add-new-page skill.
+  // Pagination, filtering, sorting and the action bar are intentionally omitted from
+  // this scaffold. See src/slices/block/pages/index/BlocksContent.tsx for the full pattern.
+  // Three placeholder items so the table renders visible example rows — replace with fetched data.
+  const items: Array<unknown> = [ {}, {}, {} ];
+  const isError = false;
+  const isLoading = false;
+
+  return (
+    // TODO (api-data): replace the "items"/"item" placeholders below with this page's entity —
+    // plural in `emptyText` ("There are no validators."), singular in `emptyStateProps.term` ("validator").
+    <DataList
+      isError={ isError }
+      itemsNum={ items.length }
+      emptyText="There are no items."
+      emptyStateProps={{ term: 'item' }}
+    >
+      <TableContainerScrollable>
+        <__PageName__Table items={ items } isLoading={ isLoading }/>
+      </TableContainerScrollable>
+    </DataList>
+  );
+};
+
+export default __PageName__Content;

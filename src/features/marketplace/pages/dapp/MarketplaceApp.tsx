@@ -1,0 +1,91 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { Flex } from '@chakra-ui/react';
+import { useRouter } from 'next/router';
+import React, { useEffect, useMemo } from 'react';
+
+import * as metadata from 'src/shell/metadata';
+
+import useIsAuth from 'src/features/account/hooks/useIsAuth';
+import { ensureLoaded as ensureWeb3Runtime } from 'src/features/connect-wallet/utils/runtime';
+import { useMarketplaceContext } from 'src/features/marketplace/context';
+
+import config from 'src/config';
+import throwOnResourceLoadError from 'src/shared/errors/throw-on-resource-load-error';
+import getQueryParamString from 'src/shared/router/get-query-param-string';
+import { route } from 'src/shared/router/routes';
+
+import { useColorMode } from 'src/toolkit/chakra/color-mode';
+
+import MarketplaceAppIframe from '../../components/MarketplaceAppIframe';
+import useAppQuery from '../../hooks/useAppQuery';
+import useAutoConnectWallet from '../../hooks/useAutoConnectWallet';
+import { useExternalDappRedirect } from '../../hooks/useExternalDappRedirect';
+import { getAppUrl } from '../../utils/dapp';
+import MarketplaceAppTopBar from './MarketplaceAppTopBar';
+
+export default function MarketplaceApp() {
+  const router = useRouter();
+  const id = getQueryParamString(router.query.id);
+  const isAuth = useIsAuth();
+  const { colorMode } = useColorMode();
+  useAutoConnectWallet();
+
+  // Route-eager wallet load: dapp pages bridge the wallet into the iframe (and honour `?action=connect`),
+  // so start the runtime at mount rather than waiting for the boot-time idle trigger.
+  React.useEffect(() => {
+    ensureWeb3Runtime();
+  }, []);
+
+  const query = useAppQuery(id, isAuth);
+  const { data, isPlaceholderData } = query;
+
+  const { setIsAutoConnectDisabled } = useMarketplaceContext();
+
+  const appUrl = useMemo(
+    () => getAppUrl(isPlaceholderData ? undefined : data?.url, router),
+    [ data?.url, isPlaceholderData, router ],
+  );
+
+  const isExternal = !isPlaceholderData && Boolean(data?.external);
+  useExternalDappRedirect(appUrl, isExternal);
+
+  const message = useMemo(() => ({
+    blockscoutColorMode: colorMode,
+    blockscoutRootUrl: route({ pathname: '/' }, { absolute: true }),
+    blockscoutAddressExplorerUrl: route({ pathname: '/address/[hash]', query: { hash: '' } }, { absolute: true }),
+    blockscoutTransactionExplorerUrl: route({ pathname: '/tx/[hash]', query: { hash: '' } }, { absolute: true }),
+    blockscoutNetworkName: config.chain.name,
+    blockscoutNetworkId: Number(config.chain.id),
+    blockscoutNetworkCurrency: config.chain.currency,
+    blockscoutNetworkRpc: config.chain.rpcUrls[0],
+  }), [ colorMode ]);
+
+  useEffect(() => {
+    if (data && !isPlaceholderData) {
+      metadata.update(
+        { pathname: '/apps/[id]', query: { id: data.id } },
+        data,
+      );
+      setIsAutoConnectDisabled(!data.internalWallet);
+    }
+  }, [ data, isPlaceholderData, setIsAutoConnectDisabled ]);
+
+  throwOnResourceLoadError(query);
+
+  return (
+    <Flex flexDirection="column" h="100%">
+      <MarketplaceAppTopBar
+        appId={ id }
+        data={ data }
+        isLoading={ isPlaceholderData }
+      />
+      <MarketplaceAppIframe
+        appId={ id }
+        appUrl={ isExternal ? undefined : appUrl }
+        message={ message }
+        mx={{ base: -4, lg: -6 }}
+      />
+    </Flex>
+  );
+};

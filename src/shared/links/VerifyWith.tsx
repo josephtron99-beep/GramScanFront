@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { Box, chakra, Grid } from '@chakra-ui/react';
+import React from 'react';
+
+import SpriteIcon from 'src/sprite/SpriteIcon';
+
+import { Button } from 'src/toolkit/chakra/button';
+import type { PopoverRootProps } from 'src/toolkit/chakra/popover';
+import { PopoverBody, PopoverContent, PopoverRoot, PopoverTrigger } from 'src/toolkit/chakra/popover';
+import { Tooltip } from 'src/toolkit/chakra/tooltip';
+import { useDisclosure } from 'src/toolkit/hooks/useDisclosure';
+
+interface Props {
+  className?: string;
+  links: Array<React.ReactNode>;
+  label: string;
+  longText: string;
+  shortText?: string;
+  popoverProps?: Partial<PopoverRootProps>;
+}
+
+const VerifyWith = ({ className, links, label, longText, shortText, popoverProps }: Props) => {
+  const popover = useDisclosure();
+
+  return (
+    <PopoverRoot open={ popover.open } onOpenChange={ popover.onOpenChange } { ...popoverProps }>
+      <Tooltip content={ label } disabled={ popover.open } disableOnMobile closeOnClick>
+        <Box className={ className }>
+          <PopoverTrigger>
+            <Button
+              size="sm"
+              variant="dropdown"
+              aria-label={ label }
+              fontWeight={ 500 }
+              px={ shortText ? 2 : 1 }
+              flexShrink={ 0 }
+              columnGap={ 1 }
+            >
+              <SpriteIcon name="explorer" boxSize={ 5 }/>
+              <chakra.span hideBelow="xl">{ longText }</chakra.span>
+              { shortText && <chakra.span hideFrom="xl">{ shortText }</chakra.span> }
+            </Button>
+          </PopoverTrigger>
+        </Box>
+      </Tooltip>
+      <PopoverContent w="auto">
+        <PopoverBody >
+          <chakra.span color="text.secondary" textStyle="xs">{ label }</chakra.span>
+          <Grid
+            alignItems="center"
+            templateColumns={ links.length > 1 ? 'auto auto' : '1fr' }
+            columnGap={ 4 }
+            rowGap={ 2 }
+            mt={ 3 }
+          >
+            { links }
+          </Grid>
+        </PopoverBody>
+      </PopoverContent>
+    </PopoverRoot>
+  );
+};
+
+export default chakra(VerifyWith);

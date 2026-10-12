@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: LicenseRef-Blockscout
+
+import { Flex } from '@chakra-ui/react';
+
+import type { ColumnsIds } from '../types/client';
+import type { schemas } from '@blockscout/api-types';
+import type { ClusterChainConfig } from 'src/features/multichain/types/client';
+import { isConfidentialTokenType } from 'src/slices/token/utils/token-types';
+
+import AddressEntity from 'src/slices/address/components/entity/AddressEntity';
+import AddressEntityWithTokenFilter from 'src/slices/address/components/entity/AddressEntityWithTokenFilter';
+import AddressFromToIcon from 'src/slices/address/components/from-to/AddressFromToIcon';
+import { getTokenTransferUiMultiplier } from 'src/slices/token-transfer/utils/get-token-transfer-ui-multiplier';
+import TokenEntity from 'src/slices/token/components/entity/TokenEntity';
+import { formatUiMultiplier } from 'src/slices/token/utils/ui-multiplier';
+import TxEntity from 'src/slices/tx/components/entity/TxEntity';
+
+import config from 'src/config';
+import TimeWithTooltip from 'src/shared/date-and-time/TimeWithTooltip';
+import AssetValue from 'src/shared/values/entity/AssetValue';
+import ConfidentialValue from 'src/shared/values/entity/ConfidentialValue';
+import NativeCoinValue from 'src/shared/values/entity/NativeCoinValue';
+
+import { Badge } from 'src/toolkit/chakra/badge';
+import { Skeleton } from 'src/toolkit/chakra/skeleton';
+
+import { getAdvancedFilterTypes } from '../utils/lib';
+
+type Props = {
+  item: schemas['AdvancedFilterItem'];
+  column: ColumnsIds;
+  isLoading?: boolean;
+  chainConfig?: ClusterChainConfig['app_config'];
+};
+
+type Address = NonNullable<Props['item']['from']>;
+
+const renderAddressEntity = (address: Address, item: Props['item'], isLoading?: boolean) => {
+  if (!item.token?.address_hash) {
+    return <AddressEntity address={ address } truncation="constant" isLoading={ isLoading }/>;
+  }
+
+  return (
+    <AddressEntityWithTokenFilter
+      address={ address }
+      truncation="constant"
+      isLoading={ isLoading }
+      tokenHash={ item.token.address_hash }
+      tokenSymbol={ item.token.symbol ?? undefined }
+    />
+  );
+};
+
+const ItemByColumn = ({ item, column, isLoading, chainConfig }: Props) => {
+  switch (column) {
+    case 'tx_hash':
+      return <TxEntity truncation="constant" hash={ item.hash } isLoading={ isLoading } noIcon fontWeight={ 700 }/>;
+    case 'type': {
+      const type = getAdvancedFilterTypes(chainConfig).find(t => t.id === item.type);
+      if (!type) {
+        return null;
+      }
+      return <Badge loading={ isLoading }>{ type.name }</Badge>;
+    }
+    case 'method':
+      return item.method ? <Badge loading={ isLoading } truncated>{ item.method }</Badge> : null;
+    case 'age':
+      return <TimeWithTooltip timestamp={ item.timestamp } isLoading={ isLoading } color="text.secondary" fontWeight={ 400 }/>;
+    case 'from':
+      return item.from ? (
+        <Flex w="100%">
+          { renderAddressEntity(item.from, item, isLoading) }
+        </Flex>
+      ) : null;
+    case 'to': {
+      const address = item.to ? item.to : item.created_contract;
+      if (!address) {
+        return null;
+      }
+      return (
+        <Flex w="100%">
+          { renderAddressEntity(address, item, isLoading) }
+        </Flex>
+      );
+    }
+    case 'or_and':
+      return (
+        <AddressFromToIcon
+          isLoading={ isLoading }
+          type="unspecified"
+        />
+      );
+    case 'multiplier': {
+      const multiplier = getTokenTransferUiMultiplier(item, chainConfig);
+      return multiplier ? <Skeleton loading={ isLoading } color="text.secondary">{ formatUiMultiplier(multiplier) }</Skeleton> : null;
+    }
+    case 'amount': {
+      if (item.token?.type === 'ERC-721') {
+        return <Skeleton loading={ isLoading }>1</Skeleton>;
+      }
+      if (item.token && isConfidentialTokenType(item.token.type)) {
+        return <ConfidentialValue loading={ isLoading }/>;
+      }
+      if (item.total && 'value' in item.total) {
+        return (
+          <AssetValue
+            amount={ item.total?.value }
+            decimals={ item.total.decimals }
+            multiplier={ getTokenTransferUiMultiplier(item, chainConfig) }
+            loading={ isLoading }
+          />
+        );
+      }
+      if (item.value) {
+        return (
+          <NativeCoinValue
+            amount={ item.value }
+            noSymbol
+            loading={ isLoading }
+          />
+        );
+      }
+      return null;
+    }
+    case 'asset':
+      return item.token ?
+        <TokenEntity token={ item.token } isLoading={ isLoading } fontWeight={ 700 } onlySymbol noCopy/> :
+        <Skeleton loading={ isLoading } fontWeight={ 700 }>{ config.chain.currency.symbol }</Skeleton>;
+    case 'fee':
+      return (
+        <NativeCoinValue
+          amount={ item.fee }
+          noSymbol
+          loading={ isLoading }
+        />
+      );
+    default:
+      return null;
+  }
+};
+
+export default ItemByColumn;
