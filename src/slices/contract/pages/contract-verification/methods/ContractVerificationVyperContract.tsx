@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import React from 'react';
 
@@ -14,7 +15,7 @@ import ContractVerificationFieldName from '../fields/ContractVerificationFieldNa
 const ContractVerificationVyperContract = ({ config }: { config: SmartContractVerificationConfig }) => {
   return (
     <ContractVerificationMethod title="Contract verification via Vyper (contract)">
-      <ContractVerificationFieldName hint="The contract name is the name assigned to the verified contract in Blockscout."/>
+      <ContractVerificationFieldName hint="The contract name is the name assigned to the verified contract in Gram Chain."/>
       <ContractVerificationFieldCompiler config={ config } isVyper/>
       { config?.is_rust_verifier_microservice_enabled && <ContractVerificationFieldEvmVersion isVyper config={ config }/> }
       <ContractVerificationFieldCode isVyper/>

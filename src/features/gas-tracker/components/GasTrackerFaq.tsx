@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import { Box } from '@chakra-ui/react';
 import React from 'react';
@@ -20,16 +21,16 @@ const FAQ_ITEMS = [
   {
     question: `How can I check ${ config.chain.name } gas fees?`,
     // eslint-disable-next-line max-len
-    answer: `You can easily check live ${ config.chain.name } gas fees on Blockscout by visiting our gas tracker. It displays current gas fees in ${ currencyUnits.gwei } for all ${ config.chain.name } transactions.`,
+    answer: `You can easily check live ${ config.chain.name } gas fees on Gram Chain by visiting our gas tracker. It displays current gas fees in ${ currencyUnits.gwei } for all ${ config.chain.name } transactions.`,
   },
   {
     question: `What is the average gas fee for ${ config.chain.name } transactions?`,
     // eslint-disable-next-line max-len
-    answer: `The average gas fee for ${ config.chain.name } transactions depends on network congestion and transaction complexity. Blockscout provides real-time gas fee estimations to help users make informed decisions.`,
+    answer: `The average gas fee for ${ config.chain.name } transactions depends on network congestion and transaction complexity. Gram Chain provides real-time gas fee estimations to help users make informed decisions.`,
   },
   {
-    question: 'How does Blockscout calculate gas fees?',
-    answer: 'Blockscout calculates gas fees based on the average price of gas fees spent for the last 200 blocks.',
+    question: 'How does Gram Chain calculate gas fees?',
+    answer: 'Gram Chain calculates gas fees based on the average price of gas fees spent for the last 200 blocks.',
   },
 ];
 

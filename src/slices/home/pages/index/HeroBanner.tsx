@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: centered hero with monochrome streak background (light and dark) and stat chips.
 
 // we use custom heading size for hero banner
 // eslint-disable-next-line no-restricted-imports
@@ -8,96 +9,63 @@ import React from 'react';
 import SearchBar from 'src/slices/search/components/search-bar/SearchBarDesktop';
 import SearchBarMobile from 'src/slices/search/components/search-bar/SearchBarMobile';
 
-import UserProfileDesktop from 'src/features/account/components/user-profile/UserProfileDesktop';
-import AdBanner from 'src/features/ads/banner/components/AdBanner';
-import RewardsButton from 'src/features/rewards/components/RewardsButton';
-
 import config from 'src/config';
-import useIsMobile from 'src/shared/hooks/useIsMobile';
 
-export const BACKGROUND_DEFAULT =
-  'radial-gradient(103.03% 103.03% at 0% 0%, rgba(183, 148, 244, 0.8) 0%, rgba(0, 163, 196, 0.8) 100%), var(--chakra-colors-blue-400)';
-const TEXT_COLOR_DEFAULT = 'white';
-const BORDER_DEFAULT = 'none';
+import HeroStatChips from './hero/HeroStatChips';
+
+// Decorative artwork, not UI colours: faint radial streaks on a white (light) or near-black (dark) base,
+// the monochrome take on the Gram Chain reference design. No token equivalent exists for these gradients.
+export const BACKGROUND_DEFAULT = [
+  'radial-gradient(ellipse 70% 60% at 50% 115%, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0) 70%)',
+  'radial-gradient(circle at 50% 120%, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.9) 75%)',
+  'repeating-conic-gradient(from 0deg at 50% 120%, rgba(0, 0, 0, 0.07) 0deg 0.35deg, rgba(0, 0, 0, 0) 0.35deg 2.4deg)',
+  'linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%)',
+].join(', ');
+
+const BACKGROUND_DARK = [
+  'radial-gradient(ellipse 70% 60% at 50% 115%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 70%)',
+  'radial-gradient(circle at 50% 120%, rgba(10, 10, 11, 0) 0%, rgba(10, 10, 11, 0.85) 75%)',
+  'repeating-conic-gradient(from 0deg at 50% 120%, rgba(255, 255, 255, 0.07) 0deg 0.35deg, rgba(0, 0, 0, 0) 0.35deg 2.4deg)',
+  'linear-gradient(180deg, #141518 0%, #0A0A0B 100%)',
+].join(', ');
 
 const HeroBanner = () => {
-
-  const isMobile = useIsMobile();
-
-  const background = {
-    _light:
-      config.slices.home.heroBanner?.background?.[0] ||
-      BACKGROUND_DEFAULT,
-    _dark:
-      config.slices.home.heroBanner?.background?.[1] ||
-      config.slices.home.heroBanner?.background?.[0] ||
-      BACKGROUND_DEFAULT,
-  };
-
-  const textColor = {
-    _light:
-      // light mode
-      config.slices.home.heroBanner?.text_color?.[0] ||
-      TEXT_COLOR_DEFAULT,
-    // dark mode
-    _dark:
-      config.slices.home.heroBanner?.text_color?.[1] ||
-      config.slices.home.heroBanner?.text_color?.[0] ||
-      TEXT_COLOR_DEFAULT,
-  };
-
-  const border = {
-    _light:
-      config.slices.home.heroBanner?.border?.[0] || BORDER_DEFAULT,
-    _dark:
-      config.slices.home.heroBanner?.border?.[1] || config.slices.home.heroBanner?.border?.[0] || BORDER_DEFAULT,
-  };
-
-  const text = (() => {
-    if (config.slices.home.heroBanner?.text) {
-      return config.slices.home.heroBanner.text;
-    }
-
-    return `${ config.chain.name } explorer`;
-  })();
+  const text = config.slices.home.heroBanner?.text || `${ config.chain.name } Block Explorer`;
 
   return (
-    <Flex
+    <Box
       w="100%"
-      background={ background }
-      border={ border }
-      borderRadius="md"
-      p={{ base: 4, lg: 8 }}
-      columnGap={ 8 }
-      alignItems="center"
+      background={{ base: BACKGROUND_DEFAULT, _dark: BACKGROUND_DARK }}
+      borderWidth="1px"
+      borderColor="border.divider"
+      borderRadius="lg"
+      px={{ base: 4, lg: 10 }}
+      pt={{ base: 8, lg: 14 }}
+      pb={{ base: 6, lg: 10 }}
+      overflow="hidden"
     >
-      <Box flexGrow={ 1 }>
-        <Flex mb={{ base: 2, lg: 3 }} justifyContent="space-between" alignItems="center" columnGap={ 2 }>
-          <Heading
-            as="h1"
-            fontSize={{ base: '18px', lg: '30px' }}
-            lineHeight={{ base: '24px', lg: '36px' }}
-            fontWeight={{ base: 500, lg: 700 }}
-            color={ textColor }
-          >
-            { text }
-          </Heading>
-          { config.shell.navigation.layout === 'vertical' && (
-            <Box display={{ base: 'none', lg: 'flex' }} gap={ 2 }>
-              { config.features.rewards.isEnabled && <RewardsButton variant="hero"/> }
-              <UserProfileDesktop buttonVariant="hero"/>
-            </Box>
-          ) }
-        </Flex>
-        <Box display={{ base: 'flex', lg: 'none' }}>
+      <Flex direction="column" alignItems="center" maxW="1080px" mx="auto">
+        <Heading
+          as="h1"
+          fontSize={{ base: '26px', lg: '44px' }}
+          lineHeight={{ base: '32px', lg: '52px' }}
+          fontWeight="bold"
+          letterSpacing="-0.02em"
+          color={{ base: 'brand.500', _dark: 'white' }}
+          textAlign="center"
+          mb={{ base: 5, lg: 7 }}
+        >
+          { text }
+        </Heading>
+        <Box w="100%" display={{ base: 'flex', lg: 'none' }}>
           <SearchBarMobile isHeroBanner/>
         </Box>
-        <Box display={{ base: 'none', lg: 'flex' }}>
+        <Box w="100%" maxW="860px" display={{ base: 'none', lg: 'flex' }}>
           <SearchBar isHeroBanner/>
         </Box>
-      </Box>
-      { !isMobile && <AdBanner format="mobile" w="fit-content" flexShrink={ 0 } borderRadius="md" overflow="hidden"/> }
-    </Flex>
+        <HeroStatChips mt={ 4 }/>
+      </Flex>
+    </Box>
   );
 };
 

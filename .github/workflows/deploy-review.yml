@@ -35,6 +35,7 @@ on:
             - eth
             - eth_sepolia
             - filecoin
+            - gcc
             - gnosis
             - gnosis_chiado
             - hpp
@@ -46,9 +47,9 @@ on:
             - optimism
             - optimism_sepolia
             - polygon
+            - robinhood
             - rootstock
             - rootstock_testnet
-            - robinhood
             - shibarium
             - stability_testnet
             - staging

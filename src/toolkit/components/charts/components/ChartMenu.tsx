@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import { Icon } from '@chakra-ui/react';
 import { useCopyToClipboard } from '@uidotdev/usehooks';
@@ -102,7 +103,7 @@ export const ChartMenu = ({
           })
           .then((dataUrl) => {
             const link = document.createElement('a');
-            link.download = `${ title }${ chainPostfix } (Blockscout chart).png`;
+            link.download = `${ title }${ chainPostfix } (Gram Chain chart).png`;
             link.href = dataUrl;
             link.click();
             link.remove();
@@ -112,7 +113,7 @@ export const ChartMenu = ({
   }, [ pngBackgroundColor, title, chainPostfix, chartRef ]);
 
   const handleSaveCsvClick = React.useCallback(() => {
-    saveAsCsv(csvData, `${ title }${ chainPostfix } (Blockscout stats)`);
+    saveAsCsv(csvData, `${ title }${ chainPostfix } (Gram Chain stats)`);
   }, [ csvData, title, chainPostfix ]);
 
   return (

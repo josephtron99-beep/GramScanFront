@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: page-wide outbound link guard.
 
 import type { HTMLChakraProps } from '@chakra-ui/react';
 import { GrowthBookProvider } from '@growthbook/growthbook-react';
@@ -33,6 +34,7 @@ import { Provider as RollbarProvider } from 'src/services/rollbar';
 import AppErrorBoundary from 'src/shared/errors/AppErrorBoundary';
 import AppErrorGlobalContainer from 'src/shared/errors/AppErrorGlobalContainer';
 import useIsMounted from 'src/shared/hooks/useIsMounted';
+import useBlockExternalNavigation from 'src/shared/links/useBlockExternalNavigation';
 import { FallbackProvider } from 'src/shared/utils/fallback-provider';
 import SpriteInjector from 'src/sprite/SpriteInjector';
 
@@ -80,6 +82,7 @@ function MyApp({ Component, pageProps, router }: AppPropsWithLayout) {
 
   const queryClient = useQueryClientConfig();
   const growthBook = useLoadFeatures(pageProps.uuid);
+  useBlockExternalNavigation();
 
   React.useEffect(() => {
     // after the app is rendered/hydrated, show the console scam warning

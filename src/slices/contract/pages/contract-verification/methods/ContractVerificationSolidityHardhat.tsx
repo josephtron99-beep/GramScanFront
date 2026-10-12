@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import { Box, Flex } from '@chakra-ui/react';
 import React from 'react';
@@ -63,15 +64,11 @@ const ContractVerificationSolidityHardhat = ({ config: formConfig }: { config: S
           <ContractVerificationFormCodeSnippet code={ secondCodeSnippet }/>
         </Flex>
         <Box whiteSpace="pre-wrap">
-          <span>Full tutorial about contract verification via Hardhat on Blockscout is available </span>
-          <Link href="https://docs.blockscout.com/devs/verification/hardhat-verification-plugin" external>
-            here
-          </Link>
           { config.chain.isProApiSupported && (
             <Box mt={ 1 }>
               <span>Get your Pro API key in the </span>
               <Link href="https://dev.blockscout.com/?utm_source=blockscout&utm_medium=contract_verification" external>
-                Blockscout Dev Portal
+                Gram Chain Dev Portal
               </Link>
             </Box>
           ) }

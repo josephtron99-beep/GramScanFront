@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: reCAPTCHA badge shown instead of the footer notice.
 
 const styles = {
-  '.grecaptcha-badge': {
-    visibility: 'hidden',
-  },
   'div:has(div):has(iframe[title="recaptcha challenge expires in two minutes"])': {
     '&::after': {
       content: `" "`,

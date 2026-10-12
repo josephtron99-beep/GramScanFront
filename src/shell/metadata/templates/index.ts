@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 /* eslint-disable max-len */
 
@@ -30,7 +31,7 @@ const OG_ROOT_PAGE = {
   image: config.metadata.og.imageUrl,
 };
 
-const DESCRIPTION_DEFAULT = 'Scan %chain_explorer_title% with Blockscout. Search transactions, verify smart contracts, analyze addresses, and access blockchain data through explorer APIs.';
+const DESCRIPTION_DEFAULT = 'Scan %chain_explorer_title% with Gram Chain. Search transactions, verify smart contracts, analyze addresses, and access blockchain data through explorer APIs.';
 
 export const TEMPLATE_MAP: Record<Route['pathname'], RouteTemplateRecord> = {
   '/': {
@@ -866,7 +867,7 @@ export const TEMPLATE_MAP: Record<Route['pathname'], RouteTemplateRecord> = {
         'default': '%chain_name% ecosystems',
       },
       description: {
-        'default': 'Explore ecosystems and blockchain networks supported by Blockscout.',
+        'default': 'Explore ecosystems and blockchain networks supported by Gram Chain.',
       },
     },
     og: OG_ROOT_PAGE,

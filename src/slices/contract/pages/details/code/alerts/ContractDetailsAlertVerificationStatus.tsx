@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import { Box } from '@chakra-ui/react';
 import React from 'react';
@@ -31,7 +32,7 @@ const ContractDetailsAlertVerificationStatus = ({ data, isLoading, addressData }
             href="https://docs.blockscout.com/devs/verification/ethereum-bytecode-database-microservice"
             external
           >
-            Blockscout Bytecode Database
+            Ethereum Bytecode Database
           </Link>
         </>
       );

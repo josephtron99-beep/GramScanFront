@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: links to non-allowlisted external sites render as plain text.
 
 import type { LinkProps as ChakraLinkProps, IconProps } from '@chakra-ui/react';
 import { Link as ChakraLink, LinkBox as ChakraLinkBox, LinkOverlay as ChakraLinkOverlay, Icon } from '@chakra-ui/react';
@@ -6,6 +7,7 @@ import NextLink from 'next/link';
 import type { LinkProps as NextLinkProps } from 'next/link';
 import React from 'react';
 
+import { isBlockedExternalHref } from 'src/shared/links/external-links-policy';
 import stripUtmParams from 'src/shared/links/strip-utm-params';
 import ArrowIcon from 'src/sprite/icons/link_external.svg';
 
@@ -57,6 +59,23 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
     const { chakra, next } = splitProps(props);
     const { external, loading, href, children, disabled, noIcon, iconColor, className, ...rest } = chakra;
 
+    if (isBlockedExternalHref(href)) {
+      return (
+        <Skeleton loading={ loading } ref={ ref as React.ForwardedRef<HTMLDivElement> } asChild>
+          <ChakraLink
+            asChild
+            className={ className }
+            { ...rest }
+            color="inherit"
+            cursor="inherit"
+            _hover={{ color: 'inherit', textDecoration: 'none' }}
+          >
+            <span>{ children }</span>
+          </ChakraLink>
+        </Skeleton>
+      );
+    }
+
     if (external) {
       // Strip UTM parameters from external links if in private mode
       const processedHref = typeof href === 'string' ? stripUtmParams(href) : href;
@@ -105,6 +124,18 @@ export const LinkOverlay = React.forwardRef<HTMLAnchorElement, LinkProps>(
   function LinkOverlay(props, ref) {
     const { chakra, next } = splitProps(props);
     const { children, external, loading, href, noIcon, iconColor, ...rest } = chakra;
+
+    if (isBlockedExternalHref(href)) {
+      return (
+        <ChakraLinkOverlay ref={ ref } { ...rest }>
+          { children ? (
+            <Skeleton display="inline-flex" alignItems="center" loading={ loading } maxW="100%" h="100%">
+              { children }
+            </Skeleton>
+          ) : null }
+        </ChakraLinkOverlay>
+      );
+    }
 
     if (external) {
       // Strip UTM parameters from external links if in private mode

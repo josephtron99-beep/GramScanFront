@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import type { DeFiDropdownButtonText, DeFiDropdownItem } from 'src/features/defi-dropdown/types/client';
 
@@ -9,7 +10,7 @@ import type { Feature } from 'src/config/utils/features';
 const items = parseEnvJson<Array<DeFiDropdownItem>>(getEnvValue('NEXT_PUBLIC_DEFI_DROPDOWN_ITEMS')) || [];
 const buttonTextEnv = parseEnvJson<DeFiDropdownButtonText>(getEnvValue('NEXT_PUBLIC_DEFI_DROPDOWN_BUTTON_TEXT'));
 
-const DEFAULT_BUTTON_TEXT = { desktop: 'Blockscout DeFi', mobile: 'DeFi' };
+const DEFAULT_BUTTON_TEXT = { desktop: 'Gram Chain DeFi', mobile: 'DeFi' };
 
 const buttonText = buttonTextEnv ?
   { desktop: buttonTextEnv.desktop, mobile: buttonTextEnv.mobile || buttonTextEnv.desktop } :

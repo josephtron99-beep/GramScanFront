@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: centered navigation menu.
 
 import { Box, chakra, Flex, Separator } from '@chakra-ui/react';
 import React from 'react';
@@ -48,7 +49,7 @@ const NavigationDesktop = () => {
         <NetworkLogo/>
         <TestnetBadge ml={ 3 }/>
         <RollupStageBadge ml={ 3 }/>
-        <chakra.nav ml="auto">
+        <chakra.nav mx="auto">
           <Flex as="ul" columnGap={ 2 } alignItems="center">
             { mainNavItems.map((item) => {
               if (isGroupItem(item)) {

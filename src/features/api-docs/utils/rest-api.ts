@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import type { SwaggerRequest } from '../types/client';
 import type { ApiPropsBase, ApiPropsFull } from 'src/api/types';
@@ -63,7 +64,7 @@ const getMicroserviceSwaggerUrl = (api: ApiPropsBase) => `${ api.endpoint }${ ap
 export const REST_API_SECTIONS = [
   config.apis.core && {
     id: 'blockscout-core-api',
-    title: 'Blockscout core API',
+    title: 'Gram Chain core API',
     swagger: {
       // default swagger URL, will be replaced with an URL constructed from the backend version and the openapi spec folder name
       url: 'https://raw.githubusercontent.com/blockscout/blockscout-api-v2-swagger/main/swagger.yaml',

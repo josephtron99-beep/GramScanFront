@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import { kebabCase, upperFirst } from 'es-toolkit';
 import type { Route } from 'nextjs-routes';
@@ -45,7 +46,7 @@ export default function generate<Pathname extends Route['pathname']>(route: Rout
     hash_short: hashParam ? shortenString(hashParam, HASH_SHORT_CHAR_NUMBER) : undefined,
   };
 
-  const titlePostfix = config.metadata.promoteBlockscoutInTitle ? ' | Blockscout' : '';
+  const titlePostfix = config.metadata.promoteBlockscoutInTitle ? ' | Gram Chain' : '';
 
   const metadataTemplates = TEMPLATE_MAP[route.pathname].metadata;
   const ogTemplates = TEMPLATE_MAP[route.pathname].og;

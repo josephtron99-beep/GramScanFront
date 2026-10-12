@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import { chakra, Box, Flex } from '@chakra-ui/react';
 import { route } from 'nextjs-routes';
@@ -64,7 +65,7 @@ const ContractDetailsAlerts = ({ data, isLoading, addressData, channel }: Props)
       ) }
       { !data?.is_verified && data?.verified_twin_address_hash && !addressData.proxy_type && (
         <Alert status="warning" whiteSpace="pre-wrap">
-          <span>Contract is not verified. However, we found a verified contract with the same bytecode in Blockscout DB </span>
+          <span>Contract is not verified. However, we found a verified contract with the same bytecode in Gram Chain DB </span>
           <AddressEntity
             address={{
               hash: data.verified_twin_address_hash,

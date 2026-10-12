@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: Gramchain monochrome brand palette and accent tokens.
 
 import { defaultsDeep } from 'es-toolkit/compat';
 
@@ -11,7 +12,7 @@ const DEFAULT_THEME_COLORS = {
       // so we use hex values instead
       // but it is not the case for other colors
       _light: { value: '#FFFFFF' }, // colors.white
-      _dark: { value: '#101112' }, // colors.black
+      _dark: { value: '#0A0A0B' }, // near-black page background of the Gram Chain theme
     },
   },
   text: {
@@ -25,8 +26,8 @@ const DEFAULT_THEME_COLORS = {
     },
   },
   hover: {
-    _light: { value: '{colors.blue.400}' },
-    _dark: { value: '{colors.blue.400}' },
+    _light: { value: '{colors.brand.400}' },
+    _dark: { value: '{colors.brand.50}' },
   },
   selected: {
     control: {
@@ -41,8 +42,8 @@ const DEFAULT_THEME_COLORS = {
     },
     option: {
       bg: {
-        _light: { value: '{colors.blue.500}' },
-        _dark: { value: '{colors.blue.500}' },
+        _light: { value: '{colors.brand.500}' },
+        _dark: { value: '{colors.brand.400}' },
       },
     },
   },
@@ -58,33 +59,33 @@ const DEFAULT_THEME_COLORS = {
   },
   button: {
     primary: {
-      _light: { value: '{colors.blue.600}' },
-      _dark: { value: '{colors.blue.600}' },
+      _light: { value: '{colors.brand.500}' },
+      _dark: { value: '{colors.brand.50}' },
       text: {
         _light: { value: '{colors.white}' },
-        _dark: { value: '{colors.white}' },
+        _dark: { value: '{colors.brand.500}' },
       },
     },
   },
   link: {
     primary: {
-      _light: { value: '{colors.blue.600}' },
-      _dark: { value: '{colors.blue.300}' },
+      _light: { value: '{colors.brand.600}' },
+      _dark: { value: '{colors.brand.100}' },
     },
   },
   graph: {
     line: {
-      _light: { value: '{colors.blue.500}' },
-      _dark: { value: '{colors.blue.200}' },
+      _light: { value: '{colors.brand.500}' },
+      _dark: { value: '{colors.brand.50}' },
     },
     gradient: {
       start: {
-        _light: { value: 'rgba(144, 205, 244, 0.3)' }, // blue.200 with opacity 0.3
-        _dark: { value: 'rgba(144, 205, 244, 0.3)' }, // blue.200 with opacity 0.3
+        _light: { value: 'rgba(23, 23, 23, 0.15)' }, // brand.500 with opacity 0.15
+        _dark: { value: 'rgba(245, 245, 245, 0.15)' }, // brand.50 with opacity 0.15
       },
       stop: {
-        _light: { value: 'rgba(144, 205, 244, 0)' }, // blue.200 with opacity 0
-        _dark: { value: 'rgba(144, 205, 244, 0)' }, // blue.200 with opacity 0
+        _light: { value: 'rgba(23, 23, 23, 0)' }, // brand.500 with opacity 0
+        _dark: { value: 'rgba(245, 245, 245, 0)' }, // brand.50 with opacity 0
       },
     },
   },
@@ -126,6 +127,18 @@ const DEFAULT_THEME_COLORS = {
 
 const colors = {
   // BASE COLORS
+  brand: {
+    '50': { value: '#F5F5F5' },
+    '100': { value: '#E5E5E5' },
+    '200': { value: '#D4D4D4' },
+    '300': { value: '#A3A3A3' },
+    '400': { value: '#525252' },
+    '500': { value: '#171717' },
+    '600': { value: '#0A0A0A' },
+    '700': { value: '#000000' },
+    '800': { value: '#000000' },
+    '900': { value: '#000000' },
+  },
   green: {
     '50': { value: '#F0FFF4' },
     '100': { value: '#C6F6D5' },

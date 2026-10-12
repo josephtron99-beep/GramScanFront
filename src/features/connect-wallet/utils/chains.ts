@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: user-facing Blockscout naming replaced with Gramchain.
 
 import type { Chain } from 'viem';
 
@@ -31,7 +32,7 @@ const getChainInfo = (
     },
     blockExplorers: {
       'default': {
-        name: 'Blockscout',
+        name: 'Gram Chain Explorer',
         url: config.app.baseUrl,
       },
     },
@@ -69,7 +70,7 @@ export const parentChain: Chain | undefined = (() => {
     },
     blockExplorers: {
       'default': {
-        name: 'Blockscout',
+        name: 'Gram Chain Explorer',
         url: parentChain.baseUrl,
       },
     },

@@ -1,29 +1,24 @@
 // SPDX-License-Identifier: LicenseRef-Blockscout
+// Modified for Gramchain on 2026-10-12: hero, network metrics and latest blocks/transactions tables layout.
 
-import { Box, Flex } from '@chakra-ui/react';
+import { Box, Grid } from '@chakra-ui/react';
 import React from 'react';
 
 import { HomeDataContextProvider } from 'src/slices/home/contexts/home-data-context';
 import { HomeRpcDataContextProvider } from 'src/slices/home/contexts/rpc-data-context';
 
-import AdBanner from 'src/features/ads/banner/components/AdBanner';
 import LatestArbitrumL2Batches from 'src/features/rollup/arbitrum/pages/home/LatestArbitrumL2Batches';
 
 import config from 'src/config';
-import useIsMobile from 'src/shared/hooks/useIsMobile';
 
-import LatestBlocks from './blocks/LatestBlocks';
-import ChainIndicators from './charts/ChainIndicators';
 import HeroBanner from './HeroBanner';
-import Highlights from './highlights/Highlights';
-import HomeStats from './stats/HomeStats';
-import Transactions from './txs/Transactions';
+import LatestBlocksTable from './latest/LatestBlocksTable';
+import LatestTxsTable from './latest/LatestTxsTable';
+import NetworkMetrics from './metrics/NetworkMetrics';
 
 const rollupFeature = config.features.rollup;
 
 const Home = () => {
-  const isMobile = useIsMobile();
-
   const leftWidget = (() => {
     if (rollupFeature.isEnabled && !rollupFeature.homepage.showLatestBlocks) {
       switch (rollupFeature.type) {
@@ -32,7 +27,7 @@ const Home = () => {
       }
     }
 
-    return <LatestBlocks/>;
+    return <LatestBlocksTable/>;
   })();
 
   return (
@@ -40,18 +35,11 @@ const Home = () => {
       <HomeRpcDataContextProvider>
         <Box as="main">
           <HeroBanner/>
-          <Flex flexDir={{ base: 'column', lg: 'row' }} columnGap={ 2 } rowGap={ 1 } mt={ 3 } _empty={{ mt: 0 }}>
-            <HomeStats/>
-            <ChainIndicators/>
-          </Flex>
-          { !isMobile && config.slices.home.highlights && <Highlights mt={ 3 }/> }
-          { isMobile && <AdBanner mt={ 6 } mx="auto" justifyContent="center" format="mobile"/> }
-          <Flex mt={ 8 } direction={{ base: 'column', lg: 'row' }} columnGap={ 12 } rowGap={ 6 }>
+          <NetworkMetrics mt={ 6 }/>
+          <Grid mt={ 6 } gridTemplateColumns={{ base: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }} gap={ 3 }>
             { leftWidget }
-            <Box flexGrow={ 1 }>
-              <Transactions/>
-            </Box>
-          </Flex>
+            <LatestTxsTable/>
+          </Grid>
         </Box>
       </HomeRpcDataContextProvider>
     </HomeDataContextProvider>
